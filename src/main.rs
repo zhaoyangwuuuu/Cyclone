@@ -16,28 +16,31 @@ mod errors {
 }
 use errors::*;
 
+const Tempstore: &str = "/tmp/tempstore";
+const RECORD: &str = ".record";
+
+struct RecordItem<'a> {
+    _time: &'a str,
+    orig: &'a Path,
+    dest: &'a Path,
+}
+
 #[derive(Parser)]
-#[command(author = "Zhaoyang", about, version)]
+#[command(author = "Zhaoyang Wu", version)]
+#[command(about = "cyclone - a CLI alternative to rm")]
 struct Cli {
-    #[arg()]
     name: String,
+
+    /// Directory where deleted files reside before being permanently deleted
+    #[arg(short = 't', long = "tempstore")]
+    tempstore: Option<String>,
 
     #[command(subcommand)]
     command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
-enum Commands {
-    Hold(Hold),
-}
-
-#[derive(Args)]
-struct Hold {
-    path: PathBuf,
-}
-
-#[derive(Args)]
-struct Delete {}
+enum Commands {}
 
 #[derive(Args)]
 struct List {}
@@ -48,7 +51,14 @@ struct Restore {}
 #[derive(Args)]
 struct Preview {}
 fn main() {
-    let cli = Cli::parse();
+    run();
+}
 
-    println!("name: {}", cli.name);
+fn run() {
+    let cli = Cli::parse();
+    if let Some(tempstore) = cli.tempstore {
+        println!("tempstore: {}", tempstore);
+    }
+
+    let name = cli.name;
 }
