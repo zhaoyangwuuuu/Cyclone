@@ -19,27 +19,36 @@ use errors::*;
 #[derive(Parser)]
 #[command(author = "Zhaoyang", about, version)]
 struct Cli {
+    #[arg()]
+    name: String,
+
     #[command(subcommand)]
     command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    Graveyard(Graveyard),
+    Hold(Hold),
 }
 
 #[derive(Args)]
-struct Graveyard {}
+struct Hold {
+    path: PathBuf,
+}
 
 #[derive(Args)]
-struct Decompose {}
+struct Delete {}
 
 #[derive(Args)]
-struct Seance {}
+struct List {}
 
 #[derive(Args)]
-struct Unbury {}
+struct Restore {}
 
 #[derive(Args)]
-struct Inspect {}
-fn main() {}
+struct Preview {}
+fn main() {
+    let cli = Cli::parse();
+
+    println!("name: {}", cli.name);
+}
