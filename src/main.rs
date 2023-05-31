@@ -29,7 +29,8 @@ struct RecordItem<'a> {
 #[command(author = "Zhaoyang Wu", version)]
 #[command(about = "cyclone - a CLI alternative to rm")]
 struct Cli {
-    name: String,
+    #[arg(num_args=1..)]
+    files: Vec<String>,
 
     /// Directory where deleted files reside before being permanently deleted
     #[arg(short = 't', long = "tempstore")]
@@ -60,5 +61,8 @@ fn run() {
         println!("tempstore: {}", tempstore);
     }
 
-    let name = cli.name;
+    let files = cli.files;
+    for file in files {
+        println!("{}", file);
+    }
 }
