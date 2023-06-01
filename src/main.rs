@@ -3,6 +3,7 @@ extern crate core;
 extern crate time;
 extern crate walkdir;
 
+use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::os::unix::fs::{FileTypeExt, PermissionsExt};
@@ -48,10 +49,10 @@ struct Restore {}
 #[derive(Args)]
 struct Preview {}
 fn main() {
-    run();
+    run().unwrap();
 }
 
-fn run() {
+fn run() -> Result<()> {
     let cli = Cli::parse();
     if let Some(tempstore) = cli.tempstore {
         println!("tempstore: {}", tempstore);
@@ -60,6 +61,8 @@ fn run() {
     let files = cli.files;
     for file in files {
         println!("{}", file);
-        options::delete(&file, Tempstore);
+        options::delete(&file, Tempstore)?;
     }
+
+    Ok(())
 }
