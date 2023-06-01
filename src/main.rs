@@ -1,7 +1,5 @@
 #[macro_use]
 extern crate core;
-#[macro_use]
-extern crate error_chain;
 extern crate time;
 extern crate walkdir;
 
@@ -11,10 +9,6 @@ use std::os::unix::fs::{FileTypeExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 use walkdir::WalkDir;
-mod errors {
-    error_chain! {}
-}
-use errors::*;
 
 mod options;
 
