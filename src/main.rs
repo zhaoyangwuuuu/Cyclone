@@ -16,6 +16,8 @@ mod errors {
 }
 use errors::*;
 
+mod options;
+
 const Tempstore: &str = "/tmp/tempstore";
 const RECORD: &str = ".record";
 
@@ -64,5 +66,6 @@ fn run() {
     let files = cli.files;
     for file in files {
         println!("{}", file);
+        options::delete(&file, Tempstore);
     }
 }
