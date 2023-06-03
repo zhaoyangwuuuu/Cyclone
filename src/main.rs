@@ -25,13 +25,16 @@ struct RecordItem<'a> {
 #[derive(Parser)]
 #[command(author = "Zhaoyang Wu", version)]
 #[command(about = "cyclone - a CLI alternative to rm")]
-struct Cli {
+pub struct Cli {
     #[arg(num_args=1..)]
     files: Vec<String>,
 
     /// Directory where deleted files reside before being permanently deleted
     #[arg(short = 't', long = "tempstore")]
     tempstore: Option<String>,
+
+    #[arg(short = 'p', long = "preview")]
+    preview: Option<bool>,
 
     #[command(subcommand)]
     command: Option<Commands>,
@@ -46,22 +49,16 @@ struct List {}
 #[derive(Args)]
 struct Restore {}
 
-#[derive(Args)]
-struct Preview {}
 fn main() {
     run().unwrap();
 }
 
 fn run() -> Result<()> {
     let cli = Cli::parse();
-    if let Some(tempstore) = cli.tempstore {
-        println!("tempstore: {}", tempstore);
-    }
 
-    let files = cli.files;
-    for file in files {
+    for file in &cli.files {
         println!("{}", file);
-        options::delete(&file, Tempstore)?;
+        options::delete(&file, &cli)?;
     }
 
     Ok(())

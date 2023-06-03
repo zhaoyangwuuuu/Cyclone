@@ -3,7 +3,9 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-pub fn delete(file: &str, tempstore: &str) -> Result<()> {
+use crate::Cli;
+
+pub fn delete(file: &str, cli: &Cli) -> Result<()> {
     let cwd: PathBuf = env::current_dir().context("Failed to get current dir")?;
 
     // Check if source exists
@@ -13,7 +15,7 @@ pub fn delete(file: &str, tempstore: &str) -> Result<()> {
                 .canonicalize()
                 .context("Failed to canonicalize path")?
         } else {
-            todo!()
+            cwd.join(file)
         };
     }
 
