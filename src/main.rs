@@ -12,6 +12,7 @@ use std::{env, fs, io};
 use walkdir::WalkDir;
 
 mod options;
+mod util;
 
 const Tempstore: &str = "/tmp/tempstore";
 const RECORD: &str = ".record";
@@ -33,8 +34,9 @@ pub struct Cli {
     #[arg(short = 't', long = "tempstore")]
     tempstore: Option<String>,
 
+    /// Preview the changes without actually deleting the files
     #[arg(short = 'p', long = "preview")]
-    preview: Option<bool>,
+    preview: bool,
 
     #[command(subcommand)]
     command: Option<Commands>,
@@ -58,7 +60,7 @@ fn run() -> Result<()> {
 
     for file in &cli.files {
         println!("{}", file);
-        options::delete(&file, &cli)?;
+        options::delete(file, &cli)?;
     }
 
     Ok(())
