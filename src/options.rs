@@ -5,7 +5,7 @@ use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-use crate::util::humanize_bytes;
+use crate::util::{humanize_bytes, prompt_yes};
 use crate::Cli;
 
 const FILES_TO_INSPECT: usize = 6;
@@ -29,6 +29,10 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
         // Check if preview is enabled
         if cli.preview {
             preview(&metadata, source, file);
+        }
+
+        if !prompt_yes(format!("Delete {}?", file)) {
+            todo!();
         }
     }
 
