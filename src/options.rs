@@ -82,3 +82,26 @@ fn preview(metadata: &Metadata, source: &PathBuf, file: &str) {
         }
     }
 }
+
+pub fn list() -> Result<()> {
+    let cwd: PathBuf = env::current_dir().context("Failed to get current dir")?;
+    println!("cwd: {:?}", cwd);
+
+    let tempstore = cwd.join(".tempstore");
+    println!("tempstore: {:?}", tempstore);
+
+    if !tempstore.exists() {
+        println!("No files to list");
+        return Ok(());
+    }
+
+    for entry in WalkDir::new(tempstore)
+        .min_depth(1)
+        .into_iter()
+        .filter_map(|entry| entry.ok())
+    {
+        println!("{}", entry.path().display());
+    }
+
+    Ok(())
+}

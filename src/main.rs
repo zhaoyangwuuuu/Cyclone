@@ -43,10 +43,17 @@ pub struct Cli {
 }
 
 #[derive(Subcommand)]
-enum Commands {}
+enum Commands {
+    /// List all files in the tempstore
+    List(List),
+}
 
 #[derive(Args)]
-struct List {}
+struct List {
+    /// List all files in the tempstore
+    #[arg(short = 'a', long = "all")]
+    all: bool,
+}
 
 #[derive(Args)]
 struct Restore {}
@@ -61,6 +68,18 @@ fn run() -> Result<()> {
     for file in &cli.files {
         println!("{}", file);
         options::delete(file, &cli)?;
+    }
+
+    match &cli.command {
+        Some(Commands::List(list)) => {
+            if list.all {
+                println!("{:?}", list.all);
+                options::list()?;
+            }
+        }
+        None => {
+            println!("Please provide a string to inspect");
+        }
     }
 
     Ok(())
