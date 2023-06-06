@@ -5,11 +5,7 @@ extern crate walkdir;
 
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
-use std::io::{BufRead, BufReader, Read, Write};
-use std::os::unix::fs::{FileTypeExt, PermissionsExt};
-use std::path::{Path, PathBuf};
-use std::{env, fs, io};
-use walkdir::WalkDir;
+use std::path::Path;
 
 mod options;
 mod util;
@@ -51,8 +47,11 @@ enum Commands {
 #[derive(Args)]
 struct List {
     /// List all files in the tempstore
-    #[arg(short = 'a', long = "all")]
+    #[arg(short = 'a', long = "all", default_value = "true")]
     all: bool,
+
+    #[arg(short = 's', long = "single")]
+    single: Option<String>,
 }
 
 #[derive(Args)]
@@ -72,9 +71,10 @@ fn run() -> Result<()> {
 
     match &cli.command {
         Some(Commands::List(list)) => {
-            if list.all {
-                println!("{:?}", list.all);
-                options::list()?;
+            println!("{:?}", list.all);
+            options::list()?;
+            if let Some(single) = &list.single {
+                println!("{:?}", single);
             }
         }
         None => {
