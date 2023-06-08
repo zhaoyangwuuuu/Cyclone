@@ -74,7 +74,7 @@ fn run() -> Result<()> {
             println!("{:?}", list.all);
             options::list()?;
             if let Some(single) = &list.single {
-                println!("{:?}", single);
+                todo!();
             }
         }
         None => {

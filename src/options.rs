@@ -31,7 +31,7 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
             preview(&metadata, source, file);
         }
 
-        if !prompt_yes(format!("Delete {}?", file)) {
+        if !prompt_yes(format!("Delete this file {}?", file)) {
             todo!();
         }
     }
