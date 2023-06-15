@@ -2,10 +2,10 @@ use anyhow::{Context, Result};
 use std::env;
 use std::fs::{self, Metadata};
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use crate::util::{humanize_bytes, prompt_yes};
+use crate::util::{humanize_bytes, join_absolute, prompt_yes, symlink_exists};
 use crate::Cli;
 
 const FILES_TO_INSPECT: usize = 6;
@@ -31,10 +31,24 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
             preview(&metadata, source, file);
         }
 
+        if cli.tempstore.is_some() {
+            todo!();
+        }
+
         if !prompt_yes(format!("Delete this file {}?", file)) {
             todo!();
         }
     }
+
+    let dest: &Path = &{
+        let dest = join_absolute(tempstore, source);
+        // Resolve a name conflict if necessary
+        if symlink_exists(&dest) {
+            rename_grave(dest)
+        } else {
+            dest
+        }
+    };
 
     Ok(())
 }

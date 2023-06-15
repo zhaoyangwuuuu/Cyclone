@@ -1,4 +1,6 @@
+use std::fs;
 use std::io::{self, BufReader, Read, Write};
+use std::path::{Path, PathBuf};
 
 /// Humanize bytes into a more readable format
 pub fn humanize_bytes(bytes: u64) -> String {
@@ -30,4 +32,17 @@ pub fn prompt_yes<T: AsRef<str>>(prompt: T) -> bool {
         .map(|c| c as char)
         .map(|c| (c == 'y' || c == 'Y'))
         .unwrap_or(false)
+}
+
+pub fn join_absolute<A: AsRef<Path>, B: AsRef<Path>>(left: A, right: B) -> PathBuf {
+    let (left, right) = (left.as_ref(), right.as_ref());
+    left.join(if let Ok(stripped) = right.strip_prefix("/") {
+        stripped
+    } else {
+        right
+    })
+}
+
+pub fn symlink_exists<P: AsRef<Path>>(path: P) -> bool {
+    fs::symlink_metadata(path).is_ok()
 }
