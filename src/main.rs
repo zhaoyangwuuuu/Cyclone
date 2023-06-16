@@ -10,7 +10,6 @@ use std::path::Path;
 mod options;
 mod util;
 
-const Tempstore: &str = "/tmp/tempstore";
 const RECORD: &str = ".record";
 
 struct RecordItem<'a> {

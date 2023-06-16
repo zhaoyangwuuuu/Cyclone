@@ -10,6 +10,7 @@ use crate::Cli;
 
 const FILES_TO_INSPECT: usize = 6;
 const LINES_TO_INSPECT: usize = 6;
+const Tempstore: &str = "/tmp/tempstore";
 
 pub fn delete(file: &str, cli: &Cli) -> Result<()> {
     let cwd: PathBuf = env::current_dir().context("Failed to get current dir")?;
