@@ -34,6 +34,7 @@ pub fn prompt_yes<T: AsRef<str>>(prompt: T) -> bool {
         .unwrap_or(false)
 }
 
+/// Concatenate two paths, even if the right argument is an absolute path.
 pub fn join_absolute<A: AsRef<Path>, B: AsRef<Path>>(left: A, right: B) -> PathBuf {
     let (left, right) = (left.as_ref(), right.as_ref());
     left.join(if let Ok(stripped) = right.strip_prefix("/") {
@@ -43,6 +44,17 @@ pub fn join_absolute<A: AsRef<Path>, B: AsRef<Path>>(left: A, right: B) -> PathB
     })
 }
 
+/// Check if a symlink exists at the given path.
 pub fn symlink_exists<P: AsRef<Path>>(path: P) -> bool {
     fs::symlink_metadata(path).is_ok()
+}
+
+/// Add a numbered extension to duplicate filenames to avoid overwriting files.
+pub fn rename_tempfile<G: AsRef<Path>>(file: G) -> PathBuf {
+    let file = file.as_ref();
+    let name = file.to_str().expect("Filename must be valid unicode.");
+    (1_u64..)
+        .map(|i| PathBuf::from(format!("{}~{}", name, i)))
+        .find(|p| !symlink_exists(p))
+        .expect("Failed to rename duplicate file or directory")
 }

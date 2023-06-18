@@ -5,16 +5,16 @@ use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use crate::util::{humanize_bytes, join_absolute, prompt_yes, symlink_exists};
+use crate::util::{humanize_bytes, join_absolute, prompt_yes, rename_tempfile, symlink_exists};
 use crate::Cli;
 
 const FILES_TO_INSPECT: usize = 6;
 const LINES_TO_INSPECT: usize = 6;
-const Tempstore: &str = "/tmp/tempstore";
+const TEMPSTORE: &str = "/tmp/tempstore";
 
 pub fn delete(file: &str, cli: &Cli) -> Result<()> {
     let cwd: PathBuf = env::current_dir().context("Failed to get current dir")?;
-    println!("cwd: {:?}", cwd);
+    let mut tempstore = TEMPSTORE;
 
     // Check if source exists
     if let Ok(metadata) = fs::symlink_metadata(file) {
@@ -25,7 +25,6 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
         } else {
             cwd.join(file)
         };
-        println!("source: {:?}", source);
 
         // Check if preview is enabled
         if cli.preview {
@@ -33,23 +32,22 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
         }
 
         if cli.tempstore.is_some() {
-            todo!();
+            tempstore = cli.tempstore.as_ref().unwrap();
         }
 
         if !prompt_yes(format!("Delete this file {}?", file)) {
             todo!();
         }
+        let dest: &Path = &{
+            let dest = join_absolute(tempstore, source);
+            // Resolve a name conflict if necessary
+            if symlink_exists(&dest) {
+                rename_tempfile(dest)
+            } else {
+                dest
+            }
+        };
     }
-
-    let dest: &Path = &{
-        let dest = join_absolute(tempstore, source);
-        // Resolve a name conflict if necessary
-        if symlink_exists(&dest) {
-            rename_grave(dest)
-        } else {
-            dest
-        }
-    };
 
     Ok(())
 }
