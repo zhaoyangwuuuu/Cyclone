@@ -10,8 +10,6 @@ use std::path::Path;
 mod options;
 mod util;
 
-const RECORD: &str = ".record";
-
 struct RecordItem<'a> {
     _time: &'a str,
     orig: &'a Path,

@@ -14,7 +14,7 @@ const TEMPSTORE: &str = "/tmp/tempstore";
 
 pub fn delete(file: &str, cli: &Cli) -> Result<()> {
     let cwd: PathBuf = env::current_dir().context("Failed to get current dir")?;
-    let mut tempstore = TEMPSTORE;
+    let mut tempstore = TEMPSTORE.to_string();
 
     // Check if source exists
     if let Ok(metadata) = fs::symlink_metadata(file) {
@@ -31,8 +31,16 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
             preview(&metadata, source, file);
         }
 
-        if cli.tempstore.is_some() {
-            tempstore = cli.tempstore.as_ref().unwrap();
+        if let Some(tempstore_path) = &cli.tempstore {
+            if !tempstore_path.is_empty() {
+                tempstore = tempstore_path.to_string();
+                println!("Using tempstore: {}", tempstore);
+            } else {
+                if let Ok(env_tempstore) = env::var("TEMPSTORE") {
+                    tempstore = env_tempstore.clone();
+                    println!("Using env tempstore: {}", tempstore);
+                }
+            }
         }
 
         if !prompt_yes(format!("Delete this file {}?", file)) {
