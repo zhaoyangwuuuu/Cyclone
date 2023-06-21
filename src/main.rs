@@ -24,7 +24,7 @@ pub struct Cli {
     files: Vec<String>,
 
     /// Directory where deleted files reside before being permanently deleted
-    #[arg(short = 't', long = "tempstore")]
+    #[arg(short = 't', long = "tempstore", default_value = "/tmp/tempstore")]
     tempstore: Option<String>,
 
     /// Preview the changes without actually deleting the files

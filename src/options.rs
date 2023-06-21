@@ -10,11 +10,10 @@ use crate::Cli;
 
 const FILES_TO_INSPECT: usize = 6;
 const LINES_TO_INSPECT: usize = 6;
-const TEMPSTORE: &str = "/tmp/tempstore";
+const DEFAULT_TEMPSTORE: &str = "/tmp/tempstore";
 
 pub fn delete(file: &str, cli: &Cli) -> Result<()> {
     let cwd: PathBuf = env::current_dir().context("Failed to get current dir")?;
-    let mut tempstore = TEMPSTORE.to_string();
 
     // Check if source exists
     if let Ok(metadata) = fs::symlink_metadata(file) {
@@ -31,17 +30,15 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
             preview(&metadata, source, file);
         }
 
-        if let Some(tempstore_path) = &cli.tempstore {
-            if !tempstore_path.is_empty() {
-                tempstore = tempstore_path.to_string();
-                println!("Using tempstore: {}", tempstore);
-            } else {
-                if let Ok(env_tempstore) = env::var("TEMPSTORE") {
-                    tempstore = env_tempstore.clone();
-                    println!("Using env tempstore: {}", tempstore);
-                }
-            }
-        }
+        let tempstore = cli
+            .tempstore
+            .clone()
+            .unwrap_or_else(|| match env::var("TEMPSTORE") {
+                Ok(val) => val,
+                Err(_) => DEFAULT_TEMPSTORE.to_string(),
+            });
+
+        println!("tempstore: {:?}", tempstore);
 
         if !prompt_yes(format!("Delete this file {}?", file)) {
             todo!();
