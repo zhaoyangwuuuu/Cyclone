@@ -5,7 +5,9 @@ use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use crate::util::{humanize_bytes, join_absolute, prompt_yes, rename_tempfile, symlink_exists};
+use crate::util::{
+    copy_file, humanize_bytes, join_absolute, prompt_yes, rename_tempfile, symlink_exists,
+};
 use crate::Cli;
 
 const FILES_TO_INSPECT: usize = 6;
@@ -40,9 +42,6 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
 
         println!("tempstore: {:?}", tempstore);
 
-        if !prompt_yes(format!("Delete this file {}?", file)) {
-            todo!();
-        }
         let dest: &Path = &{
             let dest = join_absolute(tempstore, source);
             // Resolve a name conflict if necessary
@@ -52,6 +51,57 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
                 dest
             }
         };
+
+        // Move the file to the tempstore
+        if fs::rename(source, dest).is_ok() {
+            return Ok(());
+        }
+
+        let parent = dest.parent().context("Couldn't get parent of dest")?;
+        fs::create_dir_all(parent).context("Couldn't create parent dir")?;
+
+        if fs::symlink_metadata(source)
+            .context("Couldn't get metadata")?
+            .is_dir()
+        {
+            // Walk the source, creating directories and copying files as needed
+            for entry in WalkDir::new(source).into_iter().filter_map(|e| e.ok()) {
+                // Path without the top-level directory
+                let orphan: &Path = entry
+                    .path()
+                    .strip_prefix(source)
+                    .context("Parent directory isn't a prefix of child directories?")?;
+                if entry.file_type().is_dir() {
+                    fs::create_dir_all(dest.join(orphan)).context({
+                        format!(
+                            "Failed to create {} in {}",
+                            entry.path().display(),
+                            dest.join(orphan).display()
+                        )
+                    })?;
+                } else {
+                    copy_file(entry.path(), dest.join(orphan)).context({
+                        format!(
+                            "Failed to copy file from {} to {}",
+                            entry.path().display(),
+                            dest.join(orphan).display()
+                        )
+                    })?;
+                }
+            }
+            fs::remove_dir_all(source)
+                .context(format!("Failed to remove dir: {}", source.display()))?;
+        } else {
+            copy_file(source, dest).context({
+                format!(
+                    "Failed to copy file from {} to {}",
+                    source.display(),
+                    dest.display()
+                )
+            })?;
+            fs::remove_file(source)
+                .context(format!("Failed to remove file: {}", source.display()))?;
+        }
     }
 
     Ok(())
@@ -98,6 +148,10 @@ fn preview(metadata: &Metadata, source: &PathBuf, file: &str) {
         } else {
             println!("Error reading {}", source.display());
         }
+    }
+
+    if !prompt_yes(format!("Delete this file {}?", file)) {
+        todo!();
     }
 }
 

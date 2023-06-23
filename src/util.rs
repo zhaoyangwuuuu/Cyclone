@@ -1,7 +1,9 @@
 use std::fs;
 use std::io::{self, BufReader, Read, Write};
+use std::os::unix::fs::{FileTypeExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
+const BIG_FILE_THRESHOLD: u64 = 500000000; // 500 MB
 /// Humanize bytes into a more readable format
 pub fn humanize_bytes(bytes: u64) -> String {
     let values = ["bytes", "KB", "MB", "GB", "TB"];
@@ -57,4 +59,51 @@ pub fn rename_tempfile<G: AsRef<Path>>(file: G) -> PathBuf {
         .map(|i| PathBuf::from(format!("{}~{}", name, i)))
         .find(|p| !symlink_exists(p))
         .expect("Failed to rename duplicate file or directory")
+}
+
+pub fn copy_file<S: AsRef<Path>, D: AsRef<Path>>(source: S, dest: D) -> io::Result<()> {
+    let (source, dest) = (source.as_ref(), dest.as_ref());
+    let metadata = fs::symlink_metadata(source)?;
+    let filetype = metadata.file_type();
+
+    if metadata.len() > BIG_FILE_THRESHOLD {
+        println!(
+            "About to copy a big file ({} is {})",
+            source.display(),
+            humanize_bytes(metadata.len())
+        );
+        if prompt_yes("Permanently delete this file instead?") {
+            return Ok(());
+        }
+    }
+
+    if filetype.is_file() {
+        if let Err(e) = fs::copy(source, dest) {
+            // println!("Failed to copy {} to {}", source.display(), dest.display());
+            return Err(e);
+        }
+    } else if filetype.is_fifo() {
+        let mode = metadata.permissions().mode();
+        std::process::Command::new("mkfifo")
+            .arg(dest)
+            .arg("-m")
+            .arg(mode.to_string());
+    } else if filetype.is_symlink() {
+        let target = fs::read_link(source)?;
+        std::os::unix::fs::symlink(target, dest)?;
+    } else if let Err(e) = fs::copy(source, dest) {
+        // Special file: Try copying it as normal, but this probably won't work
+        println!("Non-regular file or directory: {}", source.display());
+        if !prompt_yes("Permanently delete the file?") {
+            return Err(e);
+        }
+        // Create a dummy file to act as a marker in the graveyard
+        let mut marker = fs::File::create(dest)?;
+        marker.write_all(
+            b"This is a marker for a file that was \
+                           permanently deleted.  Requiescat in pace.",
+        )?;
+    }
+
+    Ok(())
 }
