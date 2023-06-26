@@ -13,6 +13,7 @@ use crate::Cli;
 const FILES_TO_INSPECT: usize = 6;
 const LINES_TO_INSPECT: usize = 6;
 const DEFAULT_TEMPSTORE: &str = "/tmp/tempstore";
+const RECORD: &str = ".record";
 
 pub fn delete(file: &str, cli: &Cli) -> Result<()> {
     let cwd: PathBuf = env::current_dir().context("Failed to get current dir")?;
@@ -32,13 +33,15 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
             preview(&metadata, source, file);
         }
 
-        let tempstore = cli
+        let tempstore: PathBuf = cli
             .tempstore
             .clone()
             .unwrap_or_else(|| match env::var("TEMPSTORE") {
                 Ok(val) => val,
                 Err(_) => DEFAULT_TEMPSTORE.to_string(),
-            });
+            })
+            .into();
+        let record: &Path = &tempstore.join(RECORD);
 
         println!("tempstore: {:?}", tempstore);
 
@@ -57,9 +60,12 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
             return Ok(());
         }
 
+        // If the move failed, try copying the file instead
         let parent = dest.parent().context("Couldn't get parent of dest")?;
+        // Create the parent directory if it doesn't exist
         fs::create_dir_all(parent).context("Couldn't create parent dir")?;
 
+        // If the source is a directory, copy it recursively
         if fs::symlink_metadata(source)
             .context("Couldn't get metadata")?
             .is_dir()
