@@ -53,7 +53,7 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
         println!("tempstore: {:?}", tempstore);
 
         let dest: &Path = &{
-            let dest = join_absolute(tempstore, source);
+            let dest = join_absolute(tempstore, file);
             // Resolve a name conflict if necessary
             if symlink_exists(&dest) {
                 rename_tempfile(dest)
@@ -64,6 +64,8 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
 
         // Move the file to the tempstore
         if fs::rename(source, dest).is_ok() {
+            write_log(source, dest, record)
+                .context(format!("Failed to write record at {}", record.display()))?;
             return Ok(());
         }
 
