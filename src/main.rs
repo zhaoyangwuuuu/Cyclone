@@ -1,20 +1,8 @@
-#[macro_use]
-extern crate core;
-extern crate time;
-extern crate walkdir;
-
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
-use std::path::Path;
 
 mod options;
 mod util;
-
-struct RecordItem<'a> {
-    _time: &'a str,
-    orig: &'a Path,
-    dest: &'a Path,
-}
 
 #[derive(Parser)]
 #[command(author = "Zhaoyang Wu", version)]

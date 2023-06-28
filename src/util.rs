@@ -107,3 +107,27 @@ pub fn copy_file<S: AsRef<Path>, D: AsRef<Path>>(source: S, dest: D) -> io::Resu
 
     Ok(())
 }
+
+pub fn write_log<S, D, R>(source: S, dest: D, record: R) -> io::Result<()>
+where
+    S: AsRef<Path>,
+    D: AsRef<Path>,
+    R: AsRef<Path>,
+{
+    let (source, dest) = (source.as_ref(), dest.as_ref());
+    let mut f = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(record)?;
+    writeln!(
+        f,
+        "{}\t{}\t{}",
+        time::OffsetDateTime::now_utc(),
+        source.display(),
+        dest.display()
+    )?;
+
+    println!("{:?}, {:?}", source, dest);
+
+    Ok(())
+}

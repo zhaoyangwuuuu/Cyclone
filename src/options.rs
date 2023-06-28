@@ -7,6 +7,7 @@ use walkdir::WalkDir;
 
 use crate::util::{
     copy_file, humanize_bytes, join_absolute, prompt_yes, rename_tempfile, symlink_exists,
+    write_log,
 };
 use crate::Cli;
 
@@ -14,6 +15,12 @@ const FILES_TO_INSPECT: usize = 6;
 const LINES_TO_INSPECT: usize = 6;
 const DEFAULT_TEMPSTORE: &str = "/tmp/tempstore";
 const RECORD: &str = ".record";
+
+struct RecordItem<'a> {
+    _time: &'a str,
+    orig: &'a Path,
+    dest: &'a Path,
+}
 
 pub fn delete(file: &str, cli: &Cli) -> Result<()> {
     let cwd: PathBuf = env::current_dir().context("Failed to get current dir")?;
@@ -108,6 +115,8 @@ pub fn delete(file: &str, cli: &Cli) -> Result<()> {
             fs::remove_file(source)
                 .context(format!("Failed to remove file: {}", source.display()))?;
         }
+        write_log(source, dest, record)
+            .context(format!("Failed to write record at {}", record.display()))?;
     }
 
     Ok(())
